@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aksuna</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="login">
+      <form id="login-form">
+        <h1>Aksuna</h1>
+        <p>Kara Göktaşları düşüyor. Krallığını savun.</p>
+        <input id="name" maxlength="16" placeholder="Karakter adı" required />
+        <div class="classes">
+          <label><input type="radio" name="cls" value="warrior" checked /> Savaşçı</label>
+          <label><input type="radio" name="cls" value="shadow" /> Gölge</label>
+        </div>
+        <button type="submit">Oyuna gir</button>
+        <p id="login-error"></p>
+      </form>
+    </div>
+    <div id="hud" hidden>
+      <div id="stats">
+        <div id="player-name"></div>
+        <div class="bar"><div id="hp-fill"></div><span id="hp-text"></span></div>
+        <div class="bar exp"><div id="exp-fill"></div></div>
+        <div id="meta"></div>
+      </div>
+      <div id="target" hidden><span id="target-name"></span><div class="bar"><div id="target-fill"></div></div></div>
+      <div id="chat">
+        <div id="chat-log"></div>
+        <input id="chat-input" maxlength="200" placeholder="Enter ile yaz" />
+      </div>
+      <div id="help">WASD: hareket · Sağ tık sürükle: kamera · Sol tık: hedef seç ve saldır · Boşluk: en yakına saldır</div>
+      <div id="toast"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

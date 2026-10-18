@@ -1,0 +1,29 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #111; font-family: system-ui, sans-serif; color: #f2e9d8; }
+canvas { display: block; }
+#login { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(#3a2a1a, #0d0a07); z-index: 10; }
+#login-form { width: min(340px, calc(100vw - 32px)); padding: 28px; background: rgba(20, 14, 8, 0.9); border: 1px solid #8a6a3a; border-radius: 8px; display: grid; gap: 12px; text-align: center; }
+#login-form h1 { margin: 0; font-size: 36px; letter-spacing: 4px; color: #e8b85a; }
+#login-form input[type=text], #name { padding: 10px; background: #1d150c; color: inherit; border: 1px solid #5a4528; border-radius: 4px; }
+.classes { display: flex; justify-content: space-around; }
+button { padding: 10px; background: #8a5a1a; color: #fff; border: 0; border-radius: 4px; cursor: pointer; font-weight: 600; }
+#login-error { color: #ff8a7a; min-height: 1em; margin: 0; }
+#hud { position: fixed; inset: 0; pointer-events: none; }
+#stats { position: absolute; left: 16px; top: 16px; width: 240px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 6px; }
+#player-name { font-weight: 700; margin-bottom: 6px; }
+.bar { position: relative; height: 14px; background: #2a1a1a; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.bar > div { height: 100%; background: #c0392b; width: 100%; transition: width 0.15s; }
+.bar.exp { height: 6px; background: #1a1a2a; }
+.bar.exp > div { background: #d4ac0d; }
+.bar span { position: absolute; inset: 0; font-size: 11px; text-align: center; line-height: 14px; }
+#meta { font-size: 12px; opacity: 0.85; }
+#target { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); width: 260px; text-align: center; background: rgba(0,0,0,0.5); padding: 6px 10px; border-radius: 6px; }
+#chat { position: absolute; left: 16px; bottom: 16px; width: min(380px, calc(100vw - 32px)); pointer-events: auto; }
+#chat-log { max-height: 160px; overflow-y: auto; font-size: 13px; background: rgba(0,0,0,0.4); padding: 6px; border-radius: 4px 4px 0 0; }
+#chat-input { width: 100%; padding: 6px; background: rgba(0,0,0,0.6); color: inherit; border: 1px solid #333; }
+#help { position: absolute; right: 16px; bottom: 16px; font-size: 12px; opacity: 0.7; max-width: 300px; text-align: right; }
+#toast { position: absolute; top: 30%; width: 100%; text-align: center; font-size: 28px; font-weight: 700; color: #e8b85a; text-shadow: 0 2px 6px #000; opacity: 0; transition: opacity 0.4s; }
+#toast.show { opacity: 1; }
+.dmg { position: fixed; pointer-events: none; font-weight: 700; color: #ffd36a; text-shadow: 0 1px 3px #000; animation: rise 0.9s forwards; }
+.dmg.taken { color: #ff6a5a; }
+@keyframes rise { to { transform: translateY(-40px); opacity: 0; } }
