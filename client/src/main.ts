@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Client, getStateCallbacks, Room } from "colyseus.js";
+import { playSfx, startAmbience } from "./audio";
 import { createModel, placeholders } from "./models";
 import { buildVillage } from "./world";
 
@@ -63,6 +64,7 @@ $<HTMLFormElement>("login-form").addEventListener("submit", async (e) => {
   myId = room.sessionId;
   $("login").remove();
   $("hud").hidden = false;
+  startAmbience();
   bindRoom(room);
 });
 
@@ -94,9 +96,17 @@ function bindRoom(room: Room) {
   room.onMessage("hit", ({ targetId, dmg }) => {
     const e = entities.get(targetId);
     if (e) floatText(e.obj.position, `-${dmg}`, targetId === myId);
+    if (e && (targetId === myId || selectedId === targetId)) playSfx("sword_hit");
   });
-  room.onMessage("levelUp", ({ id, level }) => id === myId && toast(`Seviye ${level}!`));
-  room.onMessage("stoneFell", () => toast("Bir Kara Göktaşı düştü!"));
+  room.onMessage("levelUp", ({ id, level }) => {
+    if (id !== myId) return;
+    toast(`Seviye ${level}!`);
+    playSfx("level_up");
+  });
+  room.onMessage("stoneFell", () => {
+    toast("Bir Kara Göktaşı düştü!");
+    playSfx("stone_fall");
+  });
   room.onMessage("respawned", () => toast("Köyde yeniden doğdun"));
   room.onMessage("chat", ({ from, text }) => {
     const line = document.createElement("div");

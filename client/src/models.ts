@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
 // Tripo3D ile üretilen modeller public/assets/models/<isim>.glb altına konur.
 // Dosya yoksa basit yer tutucu şekil kullanılır, böylece oyun modelsiz de çalışır.
 
-const loader = new GLTFLoader();
+// Modeller tools/ai/optimize-models.mjs ile meshopt sıkıştırılmıştır.
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const cache = new Map<string, Promise<THREE.Object3D | null>>();
 
 function loadGlb(name: string): Promise<THREE.Object3D | null> {
