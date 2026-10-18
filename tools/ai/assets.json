@@ -26,6 +26,44 @@
     "pine_tree": {
       "prompt": "stylized pine tree, low poly fantasy game asset",
       "faces": 4000
+    },
+    "tower_kizilbayir": {
+      "prompt": "fantasy defense tower, tall carved stone spire with a glowing crimson crystal floating on top, red cloth banners, golden east asian ornaments, stylized hand-painted fantasy MOBA game asset, vibrant colors",
+      "faces": 8000
+    },
+    "tower_gokdeniz": {
+      "prompt": "fantasy defense tower, tall carved white stone spire with a glowing sapphire blue crystal floating on top, blue cloth banners, silver ornaments, stylized hand-painted fantasy MOBA game asset, vibrant colors",
+      "faces": 8000
+    },
+    "core_kizilbayir": {
+      "prompt": "huge fantasy crystal monument on a round carved stone platform with stairs, large glowing crimson crystal core, red and gold pillars around it, stylized hand-painted fantasy MOBA game asset, vibrant colors",
+      "faces": 12000
+    },
+    "core_gokdeniz": {
+      "prompt": "huge fantasy crystal monument on a round carved white stone platform with stairs, large glowing sapphire blue crystal core, blue and silver pillars around it, stylized hand-painted fantasy MOBA game asset, vibrant colors",
+      "faces": 12000
+    },
+    "minion_kizilbayir": {
+      "prompt": "small fantasy foot soldier, red tunic and light bronze armor, round shield and short spear, chunky cute proportions, full body, T-pose, stylized hand-painted fantasy MOBA game asset, vibrant colors",
+      "faces": 6000,
+      "rig": "biped"
+    },
+    "minion_gokdeniz": {
+      "prompt": "small fantasy foot soldier, blue tunic and light silver armor, round shield and short spear, chunky cute proportions, full body, T-pose, stylized hand-painted fantasy MOBA game asset, vibrant colors",
+      "faces": 6000,
+      "rig": "biped"
+    },
+    "jungle_rock": {
+      "prompt": "large mossy cliff rock formation with grass on top, stylized hand-painted fantasy MOBA game asset, vibrant colors",
+      "faces": 4000
+    },
+    "bush": {
+      "prompt": "dense round green bush with tall grass and small purple flowers, stylized hand-painted fantasy MOBA game asset, vibrant colors",
+      "faces": 1500
+    },
+    "jungle_tree": {
+      "prompt": "large fantasy broadleaf tree with thick twisted trunk and lush rounded green canopy, stylized hand-painted fantasy MOBA game asset, vibrant colors",
+      "faces": 5000
     }
   },
   "sfx": {
@@ -51,6 +89,18 @@
     "login_background": {
       "kind": "image",
       "prompt": "Epic fantasy landscape, east asian mountain village at dusk, a dark glowing meteorite stone in the valley, painterly game key art"
+    },
+    "ground_grass": {
+      "kind": "image",
+      "prompt": "seamless tileable top-down texture of lush stylized grass with small clover and tiny flowers, hand-painted MOBA game ground texture, flat even lighting, no shadows, square"
+    },
+    "ground_path": {
+      "kind": "image",
+      "prompt": "seamless tileable top-down texture of packed dirt path with small pebbles and worn flagstones, hand-painted MOBA game ground texture, flat even lighting, square"
+    },
+    "ground_water": {
+      "kind": "image",
+      "prompt": "seamless tileable top-down texture of shallow clear turquoise river water over pebbles, hand-painted MOBA game texture, flat even lighting, square"
     }
   }
 }

@@ -126,6 +126,8 @@ export function createModel(name: string, fallback: () => THREE.Object3D, height
     if (!loaded) return;
     // İskeletli modeller düz clone ile kopyalanınca kemik bağları kopar.
     const model = cloneSkinned(loaded.scene);
+    // Tripo3D modelleri +x yönüne bakar; oyunda "ileri" +z olduğu için çeyrek tur döndürülür.
+    model.rotation.y = -Math.PI / 2;
     // Modeli istenen boya ölçekle ve ayaklarını zemine oturt.
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
@@ -147,6 +149,25 @@ function mat(color: number) {
 }
 
 export const placeholders = {
+  minion(color: number) {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.6, 4, 10), mat(color));
+    body.position.y = 0.65;
+    g.add(body);
+    return g;
+  },
+  tower(color: number) {
+    const g = new THREE.Group();
+    const pillar = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.8, 7, 8), mat(0x8a8378));
+    pillar.position.y = 3.5;
+    const crystal = new THREE.Mesh(
+      new THREE.OctahedronGeometry(1.1),
+      new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.8 }),
+    );
+    crystal.position.y = 8.3;
+    g.add(pillar, crystal);
+    return g;
+  },
   player(cls: string, isMe: boolean) {
     const g = new THREE.Group();
     const body = new THREE.Mesh(
