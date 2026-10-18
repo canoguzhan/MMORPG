@@ -1,10 +1,12 @@
-// Kullanım: node tools/ai/tripo3d.mjs <model_adı> "<İngilizce istem>"
+// Kullanım: node tools/ai/tripo3d.mjs <model_adı> "<İngilizce istem>" [üçgen_sınırı]
 // Çıktı: client/public/assets/models/<model_adı>.glb (oyun bu dosyayı otomatik yükler)
 import { authHeader, download, getJob, poll, requestJson, setJob } from "./lib.mjs";
 
 const API = "https://api.tripo3d.ai/v2/openapi";
 
-export async function generateModel(name, prompt) {
+// faces: modelin üçgen sınırı. Sahnede çok kopyası olan nesneler (ağaç gibi) düşük tutulmalı;
+// Tripo varsayılanı 150-400 bin üçgen üretir, tarayıcı için fazla.
+export async function generateModel(name, prompt, faces) {
   const headers = {
     ...authHeader("Authorization", ["TRIPO_API_KEY"], (key) => `Bearer ${key}`),
     "Content-Type": "application/json",
@@ -17,7 +19,7 @@ export async function generateModel(name, prompt) {
     const created = await requestJson(`${API}/task`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ type: "text_to_model", prompt, texture: true, pbr: true }),
+      body: JSON.stringify({ type: "text_to_model", prompt, texture: true, pbr: true, face_limit: faces }),
     });
     taskId = created.data.task_id;
     await setJob(jobKey, taskId);
@@ -41,10 +43,10 @@ export async function generateModel(name, prompt) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const [name, prompt] = process.argv.slice(2);
+  const [name, prompt, faces] = process.argv.slice(2);
   if (!name || !prompt) {
     console.error('Kullanım: node tools/ai/tripo3d.mjs <model_adı> "<istem>"');
     process.exit(1);
   }
-  await generateModel(name, prompt);
+  await generateModel(name, prompt, faces ? Number(faces) : undefined);
 }

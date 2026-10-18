@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { ROOT } from "./lib.mjs";
+import { execFileSync } from "node:child_process";
 import { generateModel } from "./tripo3d.mjs";
 import { soundEffect } from "./elevenlabs.mjs";
 import { generate } from "./higgsfield.mjs";
@@ -13,13 +14,17 @@ const only = process.argv[2];
 const exists = (p) => existsSync(resolve(ROOT, p));
 
 if (!only || only === "models") {
-  for (const [name, prompt] of Object.entries(assets.models)) {
-    if (!exists(`client/public/assets/models/${name}.glb`)) await generateModel(name, prompt);
+  for (const [name, { prompt, faces }] of Object.entries(assets.models)) {
+    if (exists(`client/public/assets/models/${name}.glb`)) continue;
+    await generateModel(name, prompt, faces);
+    execFileSync(process.execPath, [resolve(ROOT, "tools/ai/optimize-models.mjs"), name], { stdio: "inherit" });
   }
 }
 if (!only || only === "sfx") {
-  for (const [name, text] of Object.entries(assets.sfx)) {
-    if (!exists(`client/public/assets/audio/${name}.mp3`)) await soundEffect(name, text);
+  for (const [name, spec] of Object.entries(assets.sfx)) {
+    // Değer ya tarif metnidir ya da { text, duration } (saniye) nesnesi.
+    const { text, duration } = typeof spec === "string" ? { text: spec } : spec;
+    if (!exists(`client/public/assets/audio/${name}.mp3`)) await soundEffect(name, text, duration);
   }
 }
 if (!only || only === "media") {
