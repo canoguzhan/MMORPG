@@ -22,7 +22,10 @@ Tarayıcıda iki sekme açarak çok oyunculuyu deneyebilirsin. Kontroller: WASD 
 
 ## AI ile varlık üretimi
 
-Anahtarlar yalnızca ortam değişkenlerinden okunur (`.env.example`'a bak). Hiçbir anahtarı repoya yazma.
+Anahtarlar iki yoldan gelebilir, hiçbiri repoya yazılmaz:
+
+- **Claude ortamında:** ortam ayarlarındaki "gizli anahtar" (network secret) her isteğe yetki başlığını kendisi ekler; betiklerin anahtarı görmesi gerekmez.
+- **Kendi bilgisayarında:** `.env.example`'daki değişkenleri `.env` dosyasına yaz ve `node --env-file=.env tools/ai/generate-all.mjs` çalıştır.
 
 ```bash
 npm run assets                                   # tools/ai/assets.json içindeki her şeyi üretir

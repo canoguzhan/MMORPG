@@ -2,14 +2,18 @@
 //   node tools/ai/elevenlabs.mjs sfx <dosya_adı> "<ses efekti tarifi>"
 //   node tools/ai/elevenlabs.mjs tts <dosya_adı> <voice_id> "<seslendirilecek metin>"
 // Çıktı: client/public/assets/audio/<dosya_adı>.mp3
-import { requireEnv, saveBytes } from "./lib.mjs";
+import { authHeader, saveBytes } from "./lib.mjs";
 
 const API = "https://api.elevenlabs.io/v1";
 
 async function post(path, body) {
   const res = await fetch(`${API}${path}`, {
     method: "POST",
-    headers: { "xi-api-key": requireEnv("ELEVENLABS_API_KEY"), "Content-Type": "application/json", Accept: "audio/mpeg" },
+    headers: {
+      ...authHeader("xi-api-key", ["ELEVENLABS_API_KEY"], (key) => key),
+      "Content-Type": "application/json",
+      Accept: "audio/mpeg",
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`ElevenLabs ${path} → ${res.status}: ${(await res.text()).slice(0, 500)}`);

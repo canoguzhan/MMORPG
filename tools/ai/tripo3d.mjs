@@ -1,11 +1,14 @@
 // Kullanım: node tools/ai/tripo3d.mjs <model_adı> "<İngilizce istem>"
 // Çıktı: client/public/assets/models/<model_adı>.glb (oyun bu dosyayı otomatik yükler)
-import { download, poll, requestJson, requireEnv } from "./lib.mjs";
+import { authHeader, download, poll, requestJson } from "./lib.mjs";
 
 const API = "https://api.tripo3d.ai/v2/openapi";
 
 export async function generateModel(name, prompt) {
-  const headers = { Authorization: `Bearer ${requireEnv("TRIPO_API_KEY")}`, "Content-Type": "application/json" };
+  const headers = {
+    ...authHeader("Authorization", ["TRIPO_API_KEY"], (key) => `Bearer ${key}`),
+    "Content-Type": "application/json",
+  };
   const created = await requestJson(`${API}/task`, {
     method: "POST",
     headers,

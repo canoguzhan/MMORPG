@@ -4,14 +4,15 @@ import { fileURLToPath } from "node:url";
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
-/** Anahtarlar yalnızca ortam değişkenlerinden okunur; asla dosyaya yazılmaz. */
-export function requireEnv(name) {
-  const value = process.env[name];
-  if (!value) {
-    console.error(`${name} ortam değişkeni tanımlı değil.`);
-    process.exit(1);
-  }
-  return value;
+/**
+ * Anahtarlar ortam değişkenlerinden okunur; asla dosyaya yazılmaz.
+ * Değişken yoksa başlık eklenmez: Claude ortamındaki "gizli anahtar" (network secret)
+ * ayarı, isteğe yetki başlığını yolda kendisi ekler.
+ */
+export function authHeader(name, envNames, format) {
+  const values = envNames.map((n) => process.env[n]);
+  if (values.some((v) => !v)) return {};
+  return { [name]: format(...values) };
 }
 
 export async function requestJson(url, init) {

@@ -3,7 +3,7 @@
 //   node tools/ai/higgsfield.mjs video <dosya_adı> "<istem>"
 // Çıktı: client/public/assets/media/<dosya_adı>.(jpg|mp4)
 import { randomUUID } from "node:crypto";
-import { download, poll, requestJson, requireEnv } from "./lib.mjs";
+import { authHeader, download, poll, requestJson } from "./lib.mjs";
 
 const API = "https://api.higgsfield.ai";
 const ENDPOINTS = {
@@ -12,8 +12,10 @@ const ENDPOINTS = {
 };
 
 function headers() {
-  const auth = `Key ${requireEnv("HIGGSFIELD_API_KEY")}:${requireEnv("HIGGSFIELD_API_SECRET")}`;
-  return { Authorization: auth, "Content-Type": "application/json" };
+  return {
+    ...authHeader("Authorization", ["HIGGSFIELD_API_KEY", "HIGGSFIELD_API_SECRET"], (id, secret) => `Key ${id}:${secret}`),
+    "Content-Type": "application/json",
+  };
 }
 
 export async function generate(kind, name, prompt) {
