@@ -1,4 +1,5 @@
 import { Client, Room } from "colyseus";
+import { JUNGLE_CAMPS, KINGDOMS } from "../../../shared/map.js";
 import { Monster, Player, Stone, WorldState } from "./schema.js";
 import {
   ATTACK_COOLDOWN_MS,
@@ -9,12 +10,11 @@ import {
   grantExp,
   isClassId,
   limitMove,
-  MAP_HALF_SIZE,
   rollDamage,
 } from "./rules.js";
 
 const TICK_MS = 50; // 20 Hz
-const MAX_STONES = 3;
+const MAX_STONES = 4;
 const STONE_SPAWN_EVERY_MS = 20_000;
 const STONE_SUMMON_EVERY_MS = 8_000;
 const MAX_MONSTERS_PER_STONE = 4;
@@ -23,7 +23,8 @@ const MONSTER_AGGRO_RANGE = 15;
 const MONSTER_ATTACK_RANGE = 2;
 const MONSTER_ATTACK_COOLDOWN_MS = 1200;
 const MONSTER_DAMAGE = 6;
-const VILLAGE_SAFE_RADIUS = 20;
+// Krallık seçimi gelene kadar herkes Kızılbayır üssünde doğar.
+const SPAWN = KINGDOMS.kizilbayir.base;
 
 interface PlayerMeta {
   lastMoveAt: number;
@@ -83,8 +84,8 @@ export class VillageRoom extends Room<WorldState> {
     p.cls = isClassId(options?.cls) ? options.cls : "warrior";
     p.maxHp = CLASSES[p.cls as keyof typeof CLASSES].maxHp;
     p.hp = p.maxHp;
-    p.x = (Math.random() - 0.5) * 6;
-    p.z = (Math.random() - 0.5) * 6;
+    p.x = SPAWN[0] + (Math.random() - 0.5) * 6;
+    p.z = SPAWN[1] + (Math.random() - 0.5) * 6;
     this.state.players.set(client.sessionId, p);
     this.playerMeta.set(client.sessionId, { lastMoveAt: Date.now(), lastAttackAt: 0 });
   }
@@ -187,8 +188,8 @@ export class VillageRoom extends Room<WorldState> {
     this.clock.setTimeout(() => {
       const p = this.state.players.get(sessionId);
       if (!p) return;
-      p.x = 0;
-      p.z = 0;
+      p.x = SPAWN[0];
+      p.z = SPAWN[1];
       p.hp = p.maxHp;
       this.sendTo(sessionId, "respawned");
     }, 3000);
@@ -199,12 +200,14 @@ export class VillageRoom extends Room<WorldState> {
   }
 
   private spawnStone() {
-    // Taşlar köyün güvenli alanının dışına düşer.
-    const angle = Math.random() * Math.PI * 2;
-    const r = VILLAGE_SAFE_RADIUS + 10 + Math.random() * (MAP_HALF_SIZE - VILLAGE_SAFE_RADIUS - 20);
+    // Taşlar boş bir orman kampına düşer.
+    const taken = [...this.state.stones.values()];
+    const free = JUNGLE_CAMPS.filter(([x, z]) => !taken.some((t) => t.x === x && t.z === z));
+    if (!free.length) return;
+    const [x, z] = free[Math.floor(Math.random() * free.length)];
     const s = new Stone();
-    s.x = clampToMap(Math.cos(angle) * r);
-    s.z = clampToMap(Math.sin(angle) * r);
+    s.x = x;
+    s.z = z;
     const id = `stone_${this.nextId++}`;
     this.state.stones.set(id, s);
     this.stoneMeta.set(id, { lastSummonAt: 0 });

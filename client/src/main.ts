@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { Client, getStateCallbacks, Room } from "colyseus.js";
 import { playSfx, startAmbience } from "./audio";
 import { animateModel, AnimState, createModel, placeholders } from "./models";
-import { buildVillage } from "./world";
+import { buildValley } from "./world";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? `ws://${location.hostname}:2567`;
 const MOVE_SPEED = 8;
@@ -32,7 +32,7 @@ document.body.prepend(renderer.domElement);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 400);
-buildVillage(scene);
+buildValley(scene);
 
 addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
@@ -44,11 +44,12 @@ addEventListener("resize", () => {
 const entities = new Map<string, Entity>();
 let room: Room | undefined;
 let myId = "";
-let selectedId = "";
-let camYaw = Math.PI;
-let camPitch = 0.6;
-let camDist = 14;
-const keys = new Set<string>();
+let selectedId = ""; // hedef çerçevesinde gösterilen
+let attackId = ""; // sağ tıkla saldırı emri verilen
+let moveTarget: THREE.Vector3 | undefined;
+// Kamera yukarıdan eğik bakar ve dönmez; kuzey (-z) ekranın üstüdür.
+const CAM_PITCH = 0.95;
+let camDist = 17;
 let lastSentAt = 0;
 let lastAttackAt = 0;
 
@@ -76,14 +77,14 @@ function bindRoom(room: Room) {
   const state = room.state as any;
 
   $s(state).players.onAdd((p: any, id: string) => {
-    const e = addEntity(id, "player", createModel(p.cls, () => placeholders.player(p.cls, id === myId), 1.8), p);
+    const e = addEntity(id, "player", createModel(p.cls, () => placeholders.player(p.cls, id === myId), 2.4), p);
     e.label = p.name;
     $s(p).onChange(() => syncEntity(e, p, id !== myId || distanceTo(e, p) > 2));
   });
   $s(state).players.onRemove((_p: any, id: string) => removeEntity(id));
 
   $s(state).monsters.onAdd((m: any, id: string) => {
-    const e = addEntity(id, "monster", createModel(m.kind, placeholders.monster, 1.4), m);
+    const e = addEntity(id, "monster", createModel(m.kind, placeholders.monster, 1.7), m);
     e.label = "Kararmış Kurt";
     $s(m).onChange(() => syncEntity(e, m, true));
   });
@@ -152,6 +153,7 @@ function removeEntity(id: string) {
   if (!e) return;
   entities.delete(id);
   if (selectedId === id) selectedId = "";
+  if (attackId === id) attackId = "";
   if (e.kind !== "monster") return void scene.remove(e.obj);
   // Ölen canavar sahneden hemen kalkmasın; ölüm animasyonu oynasın.
   e.dying = true;
@@ -186,51 +188,76 @@ addEventListener("keydown", (e) => {
     return;
   }
   if (e.key === "Enter" && room) return chatInput.focus();
-  keys.add(e.key.toLowerCase());
-  if (e.code === "Space") selectNearestEnemy();
+  // S: dur (yürümeyi ve saldırıyı bırak).
+  if (e.key.toLowerCase() === "s") {
+    moveTarget = undefined;
+    attackId = "";
+  }
 });
-addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
 
-let dragging = false;
+// Sağ tık: düşmana saldır ya da yere yürü (basılı tutunca imleci izler). Sol tık: hedefi incele.
+let rightHeld = false;
 renderer.domElement.addEventListener("contextmenu", (e) => e.preventDefault());
 renderer.domElement.addEventListener("mousedown", (e) => {
-  if (e.button === 2) dragging = true;
-  if (e.button === 0) pickTarget(e);
+  if (e.button === 0) {
+    const id = pickEnemy(e);
+    if (id) selectedId = id;
+  }
+  if (e.button === 2) {
+    rightHeld = true;
+    const id = pickEnemy(e);
+    if (id) {
+      attackId = selectedId = id;
+      moveTarget = undefined;
+    } else {
+      commandMove(e, true);
+    }
+  }
 });
-addEventListener("mouseup", () => (dragging = false));
-addEventListener("mousemove", (e) => {
-  if (!dragging) return;
-  camYaw -= e.movementX * 0.005;
-  camPitch = THREE.MathUtils.clamp(camPitch + e.movementY * 0.005, 0.15, 1.3);
-});
-addEventListener("wheel", (e) => (camDist = THREE.MathUtils.clamp(camDist + e.deltaY * 0.01, 5, 30)));
+addEventListener("mouseup", (e) => e.button === 2 && (rightHeld = false));
+addEventListener("mousemove", (e) => rightHeld && !attackId && commandMove(e, false));
+addEventListener("wheel", (e) => (camDist = THREE.MathUtils.clamp(camDist + e.deltaY * 0.02, 12, 32)));
 
 const raycaster = new THREE.Raycaster();
-function pickTarget(e: MouseEvent) {
+const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+
+function aim(e: MouseEvent) {
   const ndc = new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   raycaster.setFromCamera(ndc, camera);
+}
+
+function pickEnemy(e: MouseEvent): string | undefined {
+  aim(e);
   const enemies = [...entities.values()].filter((x) => x.kind !== "player").map((x) => x.obj);
   for (const hit of raycaster.intersectObjects(enemies, true)) {
     let o: THREE.Object3D | null = hit.object;
     while (o && !o.userData.entityId) o = o.parent;
-    if (o) {
-      selectedId = o.userData.entityId;
-      return;
-    }
+    if (o) return o.userData.entityId;
   }
 }
 
-function selectNearestEnemy() {
-  const me = entities.get(myId);
-  if (!me) return;
-  let best = "";
-  let bestDist = Infinity;
-  for (const [id, e] of entities) {
-    if (e.kind === "player") continue;
-    const d = e.obj.position.distanceTo(me.obj.position);
-    if (d < bestDist) [best, bestDist] = [id, d];
-  }
-  selectedId = best;
+function commandMove(e: MouseEvent, showMarker: boolean) {
+  aim(e);
+  const point = raycaster.ray.intersectPlane(groundPlane, new THREE.Vector3());
+  if (!point) return;
+  attackId = "";
+  moveTarget = point.setY(0);
+  if (showMarker) placeMoveMarker(point);
+}
+
+// Yürüme hedefinde kısa süre görünen yeşil halka.
+const moveMarker = new THREE.Mesh(
+  new THREE.RingGeometry(0.5, 0.8, 24),
+  new THREE.MeshBasicMaterial({ color: 0x4cff6a, transparent: true }),
+);
+moveMarker.rotation.x = -Math.PI / 2;
+moveMarker.visible = false;
+scene.add(moveMarker);
+function placeMoveMarker(p: THREE.Vector3) {
+  moveMarker.position.set(p.x, 0.06, p.z);
+  moveMarker.scale.setScalar(1);
+  (moveMarker.material as THREE.MeshBasicMaterial).opacity = 1;
+  moveMarker.visible = true;
 }
 
 // --- Oyun döngüsü ---
@@ -258,6 +285,13 @@ renderer.setAnimationLoop(() => {
   }
   for (const e of dyingEntities) animateModel(e.obj, "death", dt);
 
+  if (moveMarker.visible) {
+    const m = moveMarker.material as THREE.MeshBasicMaterial;
+    m.opacity -= dt * 2;
+    moveMarker.scale.multiplyScalar(1 - dt);
+    moveMarker.visible = m.opacity > 0;
+  }
+
   updateCamera(me);
   updateHud(me);
   renderer.render(scene, camera);
@@ -269,19 +303,16 @@ function updateLocalPlayer(me: Entity, dt: number) {
     if (self) me.obj.position.set(self.x, 0, self.z);
     return;
   }
-  const forward = new THREE.Vector3(Math.sin(camYaw), 0, Math.cos(camYaw)).negate();
-  const right = new THREE.Vector3(-forward.z, 0, forward.x);
-  const dir = new THREE.Vector3();
-  if (keys.has("w")) dir.add(forward);
-  if (keys.has("s")) dir.sub(forward);
-  if (keys.has("d")) dir.add(right);
-  if (keys.has("a")) dir.sub(right);
-
-  const target = entities.get(selectedId);
-  if (dir.lengthSq() > 0) {
-    dir.normalize();
-    me.obj.position.addScaledVector(dir, MOVE_SPEED * dt);
-    me.obj.rotation.y = Math.atan2(dir.x, dir.z);
+  const target = entities.get(attackId);
+  if (moveTarget) {
+    const to = moveTarget.clone().sub(me.obj.position).setY(0);
+    const dist = to.length();
+    if (dist < 0.15) {
+      moveTarget = undefined;
+    } else {
+      me.obj.position.addScaledVector(to.normalize(), Math.min(dist, MOVE_SPEED * dt));
+      me.obj.rotation.y = Math.atan2(to.x, to.z);
+    }
   } else if (target) {
     // Hedef seçiliyse ona yürü ve menzile girince saldır.
     const to = target.obj.position.clone().sub(me.obj.position).setY(0);
@@ -291,7 +322,7 @@ function updateLocalPlayer(me: Entity, dt: number) {
       me.obj.position.addScaledVector(to.normalize(), MOVE_SPEED * dt);
     } else if (performance.now() - lastAttackAt > 500) {
       lastAttackAt = performance.now();
-      room!.send("attack", { targetId: selectedId });
+      room!.send("attack", { targetId: attackId });
       me.attackUntil = performance.now() + 700;
     }
   }
@@ -311,11 +342,11 @@ function updateLocalPlayer(me: Entity, dt: number) {
 function updateCamera(me?: Entity) {
   const focus = me ? me.obj.position : new THREE.Vector3();
   camera.position.set(
-    focus.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist,
-    focus.y + Math.sin(camPitch) * camDist + 1.5,
-    focus.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist,
+    focus.x,
+    focus.y + Math.sin(CAM_PITCH) * camDist,
+    focus.z + Math.cos(CAM_PITCH) * camDist,
   );
-  camera.lookAt(focus.x, focus.y + 1.5, focus.z);
+  camera.lookAt(focus.x, focus.y, focus.z);
 }
 
 function updateHud(me?: Entity) {
