@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,7 +23,13 @@ export async function requestJson(url, init) {
 }
 
 export async function download(url, outPath) {
-  const res = await fetch(url);
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (err) {
+    const host = new URL(url).host;
+    throw new Error(`İndirilemedi (${host}); ağ ayarlarında bu alan adına izin verilmiş mi? ${err.cause?.message ?? err.message}`);
+  }
   if (!res.ok) throw new Error(`İndirme başarısız (${res.status}): ${url}`);
   await saveBytes(outPath, Buffer.from(await res.arrayBuffer()));
 }
@@ -43,4 +49,27 @@ export async function poll(fn, { everyMs = 5000, timeoutMs = 15 * 60_000 } = {})
     if (Date.now() - start > timeoutMs) throw new Error("Zaman aşımı");
     await new Promise((r) => setTimeout(r, everyMs));
   }
+}
+
+// Üretim işi tamamlanıp indirme başarısız olursa (ör. ağ kısıtı) iş kimliği burada saklanır;
+// betik tekrar çalıştırıldığında yeni kredi harcamadan aynı işin sonucunu indirir.
+const JOBS = resolve(ROOT, "tools/ai/jobs.json");
+
+async function readJobs() {
+  try {
+    return JSON.parse(await readFile(JOBS, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+export async function getJob(key) {
+  return (await readJobs())[key];
+}
+
+export async function setJob(key, id) {
+  const jobs = await readJobs();
+  if (id) jobs[key] = id;
+  else delete jobs[key];
+  await writeFile(JOBS, JSON.stringify(jobs, null, 2) + "\n");
 }
