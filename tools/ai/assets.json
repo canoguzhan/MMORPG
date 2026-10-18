@@ -1,0 +1,26 @@
+{
+  "models": {
+    "warrior": "stylized east asian fantasy warrior, lamellar armor in crimson and bronze, holding a long sword, full body, T-pose, game-ready character",
+    "shadow": "stylized fantasy rogue, dark blue leather armor, hooded, twin daggers, full body, T-pose, game-ready character",
+    "darkened_wolf": "corrupted wolf creature, black fur with glowing red cracks, red eyes, stylized fantasy game monster",
+    "dark_meteor_stone": "tall jagged black meteorite stone with glowing purple runes and cracks, fantasy game prop",
+    "village_house": "small east asian fantasy village house, wooden walls, curved red tiled roof, stylized game asset",
+    "pine_tree": "stylized pine tree, low poly fantasy game asset"
+  },
+  "sfx": {
+    "sword_hit": "sharp metal sword slash hitting flesh, short",
+    "stone_fall": "huge meteorite crashing into the ground with deep rumble and crackling energy",
+    "level_up": "bright magical chime rising, fantasy level up",
+    "village_ambience": "peaceful fantasy village ambience, birds, distant wind chimes, light wind"
+  },
+  "media": {
+    "intro": {
+      "kind": "video",
+      "prompt": "Cinematic: black meteorites with purple glowing cracks fall from a torn night sky onto a fantasy east asian valley with three distant kingdoms, epic, dramatic lighting"
+    },
+    "login_background": {
+      "kind": "image",
+      "prompt": "Epic fantasy landscape, east asian mountain village at dusk, a dark glowing meteorite stone in the valley, painterly game key art"
+    }
+  }
+}
