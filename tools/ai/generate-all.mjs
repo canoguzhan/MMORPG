@@ -14,9 +14,9 @@ const only = process.argv[2];
 const exists = (p) => existsSync(resolve(ROOT, p));
 
 if (!only || only === "models") {
-  for (const [name, { prompt, faces }] of Object.entries(assets.models)) {
+  for (const [name, { prompt, faces, rig }] of Object.entries(assets.models)) {
     if (exists(`client/public/assets/models/${name}.glb`)) continue;
-    await generateModel(name, prompt, faces);
+    await generateModel(name, prompt, faces, rig);
     execFileSync(process.execPath, [resolve(ROOT, "tools/ai/optimize-models.mjs"), name], { stdio: "inherit" });
   }
 }

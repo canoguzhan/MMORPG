@@ -2,15 +2,18 @@
   "models": {
     "warrior": {
       "prompt": "stylized east asian fantasy warrior, lamellar armor in crimson and bronze, holding a long sword, full body, T-pose, game-ready character",
-      "faces": 15000
+      "faces": 15000,
+      "rig": "biped"
     },
     "shadow": {
       "prompt": "stylized fantasy rogue, dark blue leather armor, hooded, twin daggers, full body, T-pose, game-ready character",
-      "faces": 15000
+      "faces": 15000,
+      "rig": "biped"
     },
     "darkened_wolf": {
       "prompt": "corrupted wolf creature, black fur with glowing red cracks, red eyes, stylized fantasy game monster",
-      "faces": 12000
+      "faces": 12000,
+      "rig": "quadruped"
     },
     "dark_meteor_stone": {
       "prompt": "tall jagged black meteorite stone with glowing purple runes and cracks, fantasy game prop",

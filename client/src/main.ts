@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Client, getStateCallbacks, Room } from "colyseus.js";
 import { playSfx, startAmbience } from "./audio";
-import { createModel, placeholders } from "./models";
+import { animateModel, AnimState, createModel, placeholders } from "./models";
 import { buildVillage } from "./world";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? `ws://${location.hostname}:2567`;
@@ -17,6 +17,9 @@ interface Entity {
   label: string;
   hp: number;
   maxHp: number;
+  lastPos: THREE.Vector3;
+  attackUntil: number;
+  dying: boolean;
 }
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -93,7 +96,9 @@ function bindRoom(room: Room) {
   });
   $s(state).stones.onRemove((_s: any, id: string) => removeEntity(id));
 
-  room.onMessage("hit", ({ targetId, dmg }) => {
+  room.onMessage("hit", ({ targetId, dmg, by }) => {
+    const attacker = entities.get(by);
+    if (attacker) attacker.attackUntil = performance.now() + 700;
     const e = entities.get(targetId);
     if (e) floatText(e.obj.position, `-${dmg}`, targetId === myId);
     if (e && (targetId === myId || selectedId === targetId)) playSfx("sword_hit");
@@ -121,7 +126,10 @@ function addEntity(id: string, kind: Entity["kind"], obj: THREE.Object3D, src: a
   obj.position.set(src.x, 0, src.z);
   obj.userData.entityId = id;
   scene.add(obj);
-  const e: Entity = { kind, obj, target: obj.position.clone(), targetRot: src.rot ?? 0, label: "", hp: src.hp, maxHp: src.maxHp };
+  const e: Entity = {
+    kind, obj, target: obj.position.clone(), targetRot: src.rot ?? 0, label: "", hp: src.hp, maxHp: src.maxHp,
+    lastPos: obj.position.clone(), attackUntil: 0, dying: false,
+  };
   entities.set(id, e);
   return e;
 }
@@ -142,9 +150,28 @@ function distanceTo(e: Entity, src: any) {
 function removeEntity(id: string) {
   const e = entities.get(id);
   if (!e) return;
-  scene.remove(e.obj);
   entities.delete(id);
   if (selectedId === id) selectedId = "";
+  if (e.kind !== "monster") return void scene.remove(e.obj);
+  // Ölen canavar sahneden hemen kalkmasın; ölüm animasyonu oynasın.
+  e.dying = true;
+  dyingEntities.add(e);
+  setTimeout(() => {
+    scene.remove(e.obj);
+    dyingEntities.delete(e);
+  }, 1500);
+}
+
+const dyingEntities = new Set<Entity>();
+
+function animState(e: Entity, dt: number): AnimState {
+  const speed = e.obj.position.distanceTo(e.lastPos) / Math.max(dt, 1e-3);
+  e.lastPos.copy(e.obj.position);
+  if (e.dying || e.hp <= 0) return "death";
+  if (performance.now() < e.attackUntil) return "attack";
+  if (speed > 6) return "run";
+  if (speed > 0.5) return "walk";
+  return "idle";
 }
 
 // --- Giriş kontrolleri ---
@@ -218,9 +245,18 @@ renderer.setAnimationLoop(() => {
     e.obj.position.lerp(e.target, Math.min(1, dt * 10));
     e.obj.rotation.y = lerpAngle(e.obj.rotation.y, e.targetRot, dt * 10);
   }
+  const t = clock.elapsedTime;
   for (const e of entities.values()) {
-    if (e.kind === "stone") e.obj.children[0]?.rotateY(dt * 0.5);
+    if (e.kind === "stone") {
+      // Göktaşı yavaşça döner ve havada hafifçe salınır.
+      const body = e.obj.children[0];
+      body?.rotateY(dt * 0.5);
+      if (body) body.position.y = 0.3 + Math.sin(t * 1.5) * 0.3;
+    } else {
+      animateModel(e.obj, animState(e, dt), dt);
+    }
   }
+  for (const e of dyingEntities) animateModel(e.obj, "death", dt);
 
   updateCamera(me);
   updateHud(me);
@@ -256,7 +292,7 @@ function updateLocalPlayer(me: Entity, dt: number) {
     } else if (performance.now() - lastAttackAt > 500) {
       lastAttackAt = performance.now();
       room!.send("attack", { targetId: selectedId });
-      swing(me.obj);
+      me.attackUntil = performance.now() + 700;
     }
   }
 
@@ -270,11 +306,6 @@ function updateLocalPlayer(me: Entity, dt: number) {
   if (Math.hypot(self.x - me.obj.position.x, self.z - me.obj.position.z) > 4) {
     me.obj.position.set(self.x, 0, self.z);
   }
-}
-
-function swing(obj: THREE.Object3D) {
-  obj.rotation.x = -0.2;
-  setTimeout(() => (obj.rotation.x = 0), 120);
 }
 
 function updateCamera(me?: Entity) {
