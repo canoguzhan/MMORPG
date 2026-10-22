@@ -28,3 +28,11 @@ button { padding: 10px; background: #8a5a1a; color: #fff; border: 0; border-radi
 .dmg { position: fixed; pointer-events: none; font-weight: 700; color: #ffd36a; text-shadow: 0 1px 3px #000; animation: rise 0.9s forwards; }
 .dmg.taken { color: #ff6a5a; }
 @keyframes rise { to { transform: translateY(-40px); opacity: 0; } }
+
+#abilities { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; gap: 8px; pointer-events: auto; }
+.ability { position: relative; width: 64px; height: 64px; background: linear-gradient(#3a2c1c, #1a120a); border: 2px solid #b08a4a; border-radius: 6px; overflow: hidden; cursor: pointer; display: grid; place-items: center; }
+.ability .key { position: absolute; left: 4px; top: 2px; font-weight: 700; color: #f0d090; font-size: 13px; }
+.ability .name { font-size: 10px; text-align: center; padding: 14px 3px 0; color: #e8dcc0; line-height: 1.1; }
+.ability .cd { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: rgba(0, 0, 0, 0.65); }
+.ability .cd-text { position: absolute; inset: 0; display: grid; place-items: center; font-size: 22px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px #000; }
+@media (max-width: 600px) { .ability { width: 52px; height: 52px; } #help { display: none; } }

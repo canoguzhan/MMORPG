@@ -3,6 +3,7 @@ import { MapSchema, Schema, type } from "@colyseus/schema";
 export class Player extends Schema {
   @type("string") name = "";
   @type("string") cls = "warrior";
+  @type("string") kingdom = "kizilbayir";
   @type("number") x = 0;
   @type("number") z = 0;
   @type("number") rot = 0;
@@ -30,8 +31,28 @@ export class Stone extends Schema {
   @type("number") maxHp = 400;
 }
 
+/** Koridorda karşı üsse yürüyen asker. */
+export class Minion extends Schema {
+  @type("string") kingdom = "kizilbayir";
+  @type("number") x = 0;
+  @type("number") z = 0;
+  @type("number") rot = 0;
+  @type("number") hp = 120;
+  @type("number") maxHp = 120;
+}
+
+export class Tower extends Schema {
+  @type("string") kingdom = "kizilbayir";
+  @type("number") x = 0;
+  @type("number") z = 0;
+  @type("number") hp = 1500;
+  @type("number") maxHp = 1500;
+}
+
 export class WorldState extends Schema {
   @type({ map: Player }) players = new MapSchema<Player>();
   @type({ map: Monster }) monsters = new MapSchema<Monster>();
   @type({ map: Stone }) stones = new MapSchema<Stone>();
+  @type({ map: Minion }) minions = new MapSchema<Minion>();
+  @type({ map: Tower }) towers = new MapSchema<Tower>();
 }

@@ -1,3 +1,5 @@
+import { ABILITIES, SLOTS, Slot } from "../../../shared/abilities.js";
+
 // Saf oyun kuralları: odadan bağımsız, test edilebilir.
 
 export const MAP_HALF_SIZE = 100;
@@ -66,4 +68,19 @@ export function grantExp(p: { level: number; exp: number }, amount: number): num
 export function rollDamage(cls: ClassId, level: number, rand = Math.random): number {
   const [min, max] = CLASSES[cls].damage;
   return Math.round((min + rand() * (max - min)) * (1 + (level - 1) * 0.1));
+}
+
+// Yetenek tablosu istemciyle ortak: shared/abilities.ts
+export { ABILITIES, SLOTS };
+export type { Slot };
+
+export function isSlot(value: unknown): value is Slot {
+  return typeof value === "string" && (SLOTS as readonly string[]).includes(value);
+}
+
+/** Atılmanın varış noktası: hedef nokta menzilden uzaksa menzil kadar gidilir. */
+export function dashEnd(fromX: number, fromZ: number, toX: number, toZ: number, range: number) {
+  const d = distance(fromX, fromZ, toX, toZ);
+  const k = d > range ? range / d : 1;
+  return { x: clampToMap(fromX + (toX - fromX) * k), z: clampToMap(fromZ + (toZ - fromZ) * k) };
 }
